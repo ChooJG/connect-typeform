@@ -43,7 +43,7 @@ async def log_data(request: Request):
 
         # 질문과 답변을 저장할 리스트
         messages = []
-        messages.append({"role": "system", "content": "You are a curriculum advisor."})
+        messages.append({"role": "system", "content": "너는 훌륭한 커리큘럼 조언자야."})
 
         # 'fields'와 'answers'에서 질문과 답변 추출
         fields = data['form_response']['definition']['fields']
@@ -63,14 +63,12 @@ async def log_data(request: Request):
             messages.append({"role": "user", "content": response})
 
         # 추가 질문
-        messages.append({"role": "user", "content": "나에겐 무슨 커리큘럼이 어울릴까?"})
+        messages.append({"role": "user", "content": CURRICULUM_PROMPT})
+        messages.append({"role": "user", "content": "위 커리큘럼 중 가장 어올리는 커리큘럼과, 그 커리큘럼이 해당하는 트랙을 알려줘."})
 
-        print("Messages to OpenAI: %s", messages)
 
         # OpenAI API 호출
-        client = OpenAI(
-            api_key=os.getenv('API_KEY', settings.openai_api_key)
-        )
+        client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages
