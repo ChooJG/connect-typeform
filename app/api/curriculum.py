@@ -33,55 +33,33 @@ class InputData(BaseModel):
 @router.post("/recommend", response_model=CurriculumResponse)
 async def recommend_curriculum(data: StudentData):
     try:
-        formatted_data = f"""
-        Background: {data.background}
-        Goals: {data.goals}
-        Current Level: {data.current_level}
-        """
         client = OpenAI(
             api_key=os.getenv('API_KEY', settings.openai_api_key)
         )
 
+        # 질문과 답변을 순차적으로 구성
+        messages = [
+            {"role": "system", "content": "You are a curriculum advisor."},
+            {"role": "assistant", "content": "당신의 이름은 무엇인가요? (주관식)"},
+            {"role": "user", "content": data.name},
+            {"role": "assistant", "content": "최종 학력은 어디인가요? (객관식)"},
+            {"role": "user", "content": data.education},
+            {"role": "assistant", "content": "주요 관심사는 무엇인가요? (주관식)"},
+            {"role": "user", "content": data.interests},
+        ]
+
+        # OpenAI API 호출
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a curriculum advisor."},
-                {"role": "user", "content": CURRICULUM_PROMPT.format(student_data=formatted_data)}
-            ]
+            messages=messages
         )
 
+        # ChatGPT의 응답을 CurriculumResponse로 반환
         return CurriculumResponse(curriculum=response.choices[0].message.content)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-@router.post("/test", response_model=RawDataResponse)
-async def log_raw_data(data: InputData):
-    try:
-        # OpenAI 클라이언트 초기화
-        client = OpenAI(
-            api_key=os.getenv('API_KEY', settings.openai_api_key)
-        )
-
-        # ChatGPT에 메시지 전송
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # 사용할 모델
-            messages=[
-                {"role": "user", "content": data.message}
-            ]
-        )
-
-        # 응답 메시지 추출
-        chat_response = response.choices[0].message.content
-
-        return RawDataResponse(
-            data_type=str(type(data)),
-            raw_data=chat_response,
-            data_dict=data.dict()
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/log")
