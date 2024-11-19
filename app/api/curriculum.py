@@ -35,29 +35,46 @@ class CurriculumResponse(BaseModel):
 
 
 @router.post("/recommend", response_model=CurriculumResponse)
-async def recommend_curriculum(data: StudentData):
+async def log_data(request: Request):
     try:
+        # 요청 본문을 JSON 형태로 읽어오기
+        data = await request.json()
+
+        # 질문과 답변을 저장할 리스트
+        messages = []
+
+        # 시스템 메시지 추가
+        messages.append({"role": "system", "content": "You are a curriculum advisor."})
+
+        # 'fields'와 'answers'에서 질문과 답변 추출
+        fields = data['form_response']['definition']['fields']
+        answers = data['form_response']['answers']
+
+        # 질문과 답변을 매핑하여 messages 리스트에 추가
+        for field, answer in zip(fields, answers):
+            question = field['title']
+            if answer['type'] == 'text':
+                response = answer['text']
+            elif answer['type'] == 'choice':
+                response = answer['choice']['label']
+            else:
+                response = "응답 없음"  # 다른 타입에 대한 기본 응답
+
+            messages.append({"role": "assistant", "content": question})
+            messages.append({"role": "user", "content": response})
+
+        messages.append({"role": "user", "content": "나에겐 무슨 커리큘럼이 어올릴까?"})
+
+            # OpenAI API 호출
         client = OpenAI(
             api_key=os.getenv('API_KEY', settings.openai_api_key)
         )
-
-        # 질문과 답변을 순차적으로 구성
-        messages = [
-            {"role": "system", "content": "You are a curriculum advisor."},
-            {"role": "assistant", "content": f"학생의 이름: {data.name}"},
-            {"role": "user", "content": "최종 학력은 어디인가요?"},
-            {"role": "assistant", "content": f"최종 학력: {data.education}"},
-            {"role": "user", "content": "주요 관심사는 무엇인가요?"},
-            {"role": "assistant", "content": f"관심사: {data.interests}"}
-        ]
-
-        # OpenAI API 호출
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages
         )
 
-        print("gpt의 답변 : ", response.choices[0].message.content)
+        print("gpt 답변 : ", response.choices[0].message.content)
 
         # ChatGPT의 응답을 CurriculumResponse로 반환
         return CurriculumResponse(curriculum=response.choices[0].message.content)
