@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.core.prompts import CURRICULUM_PROMPT
 from typing import Dict, Any
 import json
-
+from typing import List
 
 router = APIRouter()
 
@@ -39,11 +39,10 @@ async def log_data(request: Request):
     try:
         # 요청 본문을 JSON 형태로 읽어오기
         data = await request.json()
+        print("Received data: %s", data)
 
         # 질문과 답변을 저장할 리스트
         messages = []
-
-        # 시스템 메시지 추가
         messages.append({"role": "system", "content": "You are a curriculum advisor."})
 
         # 'fields'와 'answers'에서 질문과 답변 추출
@@ -63,9 +62,12 @@ async def log_data(request: Request):
             messages.append({"role": "assistant", "content": question})
             messages.append({"role": "user", "content": response})
 
-        messages.append({"role": "user", "content": "나에겐 무슨 커리큘럼이 어올릴까?"})
+        # 추가 질문
+        messages.append({"role": "user", "content": "나에겐 무슨 커리큘럼이 어울릴까?"})
 
-            # OpenAI API 호출
+        print("Messages to OpenAI: %s", messages)
+
+        # OpenAI API 호출
         client = OpenAI(
             api_key=os.getenv('API_KEY', settings.openai_api_key)
         )
@@ -74,12 +76,13 @@ async def log_data(request: Request):
             messages=messages
         )
 
-        print("gpt 답변 : ", response.choices[0].message.content)
+        print("OpenAI response: %s", response.choices[0].message.content)
 
         # ChatGPT의 응답을 CurriculumResponse로 반환
         return CurriculumResponse(curriculum=response.choices[0].message.content)
 
     except Exception as e:
+        print("An error occurred: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
