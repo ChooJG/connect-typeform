@@ -7,12 +7,7 @@ from app.core.prompts import CURRICULUM_PROMPT
 from typing import Dict, Any
 
 
-
 router = APIRouter()
-client = OpenAI(
-    api_key=os.getenv('API_KEY', settings.openai_api_key)
-)
-
 
 class StudentData(BaseModel):
     background: str
@@ -42,6 +37,9 @@ async def recommend_curriculum(data: StudentData):
         Goals: {data.goals}
         Current Level: {data.current_level}
         """
+        client = OpenAI(
+            api_key=os.getenv('API_KEY', settings.openai_api_key)
+        )
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
