@@ -5,6 +5,7 @@ import os
 from app.core.config import settings
 from app.core.prompts import CURRICULUM_PROMPT
 from typing import Dict, Any
+import json
 
 
 router = APIRouter()
@@ -89,8 +90,11 @@ async def log_data(request: Request):
         # 요청 본문을 JSON 형태로 읽어오기
         data = await request.json()
 
+        # 데이터를 보기 좋게 정리하여 출력
+        pretty_data = json.dumps(data, ensure_ascii=False, indent=4)
+
         # 로그 출력
-        print("어케오나 보자 : ", data)
+        print(pretty_data)
 
         return {"message": "Log received", "data": data}
     except Exception as e:
