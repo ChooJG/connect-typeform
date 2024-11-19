@@ -4,6 +4,8 @@ from openai import OpenAI
 import os
 from app.core.config import settings
 from app.core.prompts import CURRICULUM_PROMPT
+from typing import Any
+
 
 router = APIRouter()
 client = OpenAI(
@@ -41,3 +43,16 @@ async def recommend_curriculum(data: StudentData):
         return CurriculumResponse(curriculum=response.choices[0].message.content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.post("/log")
+async def log_raw_data(data: Any):
+   try:
+       return {
+           "data_type": str(type(data)),
+           "raw_data": str(data),
+           "data_dict": data.dict() if hasattr(data, "dict") else None
+       }
+   except Exception as e:
+       raise HTTPException(status_code=500, detail=str(e))
