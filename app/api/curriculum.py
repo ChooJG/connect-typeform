@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 import os
@@ -83,20 +83,15 @@ async def log_raw_data(data: InputData):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-
-@router.post("/log", response_model=RawDataResponse)
-async def log_raw_data(data: InputData):
+@router.post("/log")
+async def log_data(request: Request):
     try:
+        # 요청 본문을 JSON 형태로 읽어오기
+        data = await request.json()
 
-        print("타입 : ", type(data))
-        print("데이터 : ", data)
-        print("출력 : ", data.dict() if hasattr(data, "dict") else None)
+        # 로그 출력
+        print("어케오나 보자 : ", data)
 
-        return RawDataResponse(
-            data_type=str(type(data)),
-            raw_data=str(data),
-            data_dict=data.dict() if hasattr(data, "dict") else None
-        )
+        return {"message": "Log received", "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
