@@ -10,14 +10,6 @@ import json
 
 router = APIRouter()
 
-class StudentData(BaseModel):
-    background: str
-    goals: str
-    current_level: str
-
-
-class CurriculumResponse(BaseModel):
-    curriculum: str
 
 
 class RawDataResponse(BaseModel):
@@ -30,6 +22,18 @@ class InputData(BaseModel):
     data: Any
 
 
+# StudentData 모델 정의
+class StudentData(BaseModel):
+    name: str
+    education: str
+    interests: str
+
+
+# CurriculumResponse 모델 정의
+class CurriculumResponse(BaseModel):
+    curriculum: str
+
+
 @router.post("/recommend", response_model=CurriculumResponse)
 async def recommend_curriculum(data: StudentData):
     try:
@@ -40,12 +44,11 @@ async def recommend_curriculum(data: StudentData):
         # 질문과 답변을 순차적으로 구성
         messages = [
             {"role": "system", "content": "You are a curriculum advisor."},
-            {"role": "assistant", "content": "당신의 이름은 무엇인가요? (주관식)"},
-            {"role": "user", "content": data.name},
-            {"role": "assistant", "content": "최종 학력은 어디인가요? (객관식)"},
-            {"role": "user", "content": data.education},
-            {"role": "assistant", "content": "주요 관심사는 무엇인가요? (주관식)"},
-            {"role": "user", "content": data.interests},
+            {"role": "assistant", "content": f"학생의 이름: {data.name}"},
+            {"role": "user", "content": "최종 학력은 어디인가요?"},
+            {"role": "assistant", "content": f"최종 학력: {data.education}"},
+            {"role": "user", "content": "주요 관심사는 무엇인가요?"},
+            {"role": "assistant", "content": f"관심사: {data.interests}"}
         ]
 
         # OpenAI API 호출
@@ -53,6 +56,8 @@ async def recommend_curriculum(data: StudentData):
             model="gpt-4o-mini",
             messages=messages
         )
+
+        print("gpt의 답변 : ", response.choices[0].message.content)
 
         # ChatGPT의 응답을 CurriculumResponse로 반환
         return CurriculumResponse(curriculum=response.choices[0].message.content)
